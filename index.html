@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+<title>Animal Species Identifier</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+
+/* Upload box base style */
+#uploadBox{
+    border:2px dashed rgba(255,255,255,0.35);
+    background:rgba(255,255,255,0.05);
+    transition:all 0.35s ease;
+}
+
+/* Upload box hover effect */
+#uploadBox:hover{
+
+    border-color:#9b4cfdcc;
+
+    background:rgba(168,85,247,0.08);
+
+    box-shadow:
+    0 0 10px rgba(168,85,247,0.7),
+    0 0 25px rgba(168,85,247,0.5),
+    0 0 40px rgba(168,85,247,0.3);
+
+    transform:scale(1.02);
+}
+
+
+/* Upload icon animation */
+#uploadBox:hover div:first-child{
+    transform:translateY(-2px);
+    transition:0.3s;
+}
+
+
+/* Remove button styling */
+#removeImage{
+
+    background:red;
+    border:none;
+
+    transition:all 0.3s ease;
+}
+
+/* Remove button hover */
+#removeImage:hover{
+
+    background:darkred;
+
+
+    transform:scale(1.1);
+}
+
+#predictBtn{
+    background-color: #a54df9;
+}
+#predictBtn:hover{
+    background-color: #9233eab5;
+}
+
+</style>
+</head>
+
+<body class="h-screen overflow-hidden">
+
+<section class="relative h-screen flex items-center justify-center">
+
+<!-- Background -->
+<img src="https://wallpapers.com/images/hd/professional-background-2cmtz5pbgubk31mg.jpg"
+class="absolute w-full h-full object-cover">
+
+<div class="absolute inset-0 bg-black/65"></div>
+
+<div class="relative z-10 text-white text-center">
+
+<h1 class="text-5xl md:text-7xl font-extrabold tracking-wide">
+ANIMAL SPECIES <br> IDENTIFIER
+</h1>
+
+<p class="mt-4 text-lg text-gray-300 max-w-xl mx-auto">
+Upload an image and our ML model 
+will detect and classify the animal species instantly.
+</p>
+
+
+<!-- CARDS CONTAINER -->
+<div class="mt-10 flex gap-10 justify-center items-start">
+
+<!-- UPLOAD CARD -->
+<div id="uploadCard"
+class="bg-white/10 backdrop-blur-lg text-white rounded-3xl shadow-2xl p-10 w-[420px] border border-white/20">
+
+<p class="text-gray-200 text-lg font-semibold mb-6">
+Upload an animal image to identify its species using AI.
+</p>
+
+
+<!-- Upload area -->
+<div id="uploadBox"
+class="border-2 border-dashed border-white/40 rounded-xl p-10 cursor-pointer bg-white/5 hover:bg-white/10 transition">
+
+<input type="file" id="imageUpload" class="hidden">
+
+<div class="text-gray-300">
+
+<div class="text-3xl mb-2"><i class="fa-solid fa-upload"></i></div>
+
+<p class="font-medium">
+Click to upload or drag and drop
+</p>
+
+<p class="text-xs mt-1">
+JPG, PNG, WEBP
+</p>
+
+</div>
+
+</div>
+
+
+<!-- Preview -->
+<div id="previewContainer" class="hidden relative mt-4">
+
+<button id="removeImage"
+class="absolute top-2 right-2 bg-black/70 text-white rounded-full px-2 py-1 text-sm">
+✕
+</button>
+
+<img id="preview"
+class="w-full h-40 object-cover rounded-lg">
+
+</div>
+
+
+<button id="predictBtn"
+class="w-full mt-6 bg-white/20 hover:bg-white/30 text-white py-3 rounded-xl font-semibold transition">
+Identify Species
+</button>
+
+</div>
+
+
+
+<!-- RESULT CARD -->
+<div id="resultCard"
+class="hidden bg-white/10 backdrop-blur-lg text-white rounded-3xl shadow-2xl p-8 w-[420px] border border-white/20 transition-all duration-500">
+
+<h2 class="text-xl font-semibold mb-4">Prediction Result</h2>
+
+<img id="resultImage"
+class="w-full h-48 object-cover rounded-lg mb-4">
+
+<div id="predictionText"
+class="text-lg font-semibold"></div>
+
+<div id="confidenceText"
+class="text-gray-300 mt-1"></div>
+
+
+<!-- Confidence bar -->
+<div class="mt-4 w-full bg-gray-700 rounded-full h-3">
+<div id="confidenceBar"
+class="bg-green-500 h-3 rounded-full transition-all duration-500"
+style="width:0%">
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<script>
+
+const upload = document.getElementById("imageUpload")
+const preview = document.getElementById("preview")
+const uploadBox = document.getElementById("uploadBox")
+const previewContainer = document.getElementById("previewContainer")
+const removeBtn = document.getElementById("removeImage")
+
+const resultCard = document.getElementById("resultCard")
+const resultImage = document.getElementById("resultImage")
+const predictionText = document.getElementById("predictionText")
+const confidenceText = document.getElementById("confidenceText")
+const confidenceBar = document.getElementById("confidenceBar")
+
+
+uploadBox.addEventListener("click", () => upload.click())
+
+
+upload.addEventListener("change", function(){
+
+const file = upload.files[0]
+
+if(file){
+
+preview.src = URL.createObjectURL(file)
+
+uploadBox.classList.add("hidden")
+previewContainer.classList.remove("hidden")
+
+}
+
+})
+
+
+removeBtn.addEventListener("click", function(){
+
+upload.value=""
+
+previewContainer.classList.add("hidden")
+uploadBox.classList.remove("hidden")
+
+resultCard.classList.add("hidden")
+
+})
+
+
+document.getElementById("predictBtn").addEventListener("click", async () => {
+
+const file = upload.files[0]
+
+if(!file){
+alert("Upload an image first")
+return
+}
+
+predictionText.innerHTML="Analyzing image..."
+confidenceText.innerHTML=""
+confidenceBar.style.width="0%"
+resultCard.classList.remove("hidden")
+
+const formData = new FormData()
+formData.append("image",file)
+
+try{
+
+const response = await fetch("http://localhost:5000/predict",{
+method:"POST",
+body:formData
+})
+
+const data = await response.json()
+
+resultImage.src = preview.src
+
+predictionText.innerHTML =
+`Prediction: <span class="text-green-400">${data.species}</span>`
+
+confidenceText.innerHTML =
+`Confidence: ${(data.confidence*100).toFixed(2)}%`
+
+confidenceBar.style.width =
+(data.confidence*100)+"%"
+
+}catch(err){
+
+predictionText.innerHTML="Error contacting server"
+
+}
+
+})
+
+</script>
+
+</body>
+</html>
